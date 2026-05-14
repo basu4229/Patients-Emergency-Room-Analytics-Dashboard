@@ -1,0 +1,175 @@
+Patients Emergency Room Dashboard Dax:
+%  Referred Patients = 
+VAR _FilterPatients =
+CALCULATE(
+    [Total Patients],
+    'Patient Dataset'[department_referral]<>"none"
+)
+RETURN
+DIVIDE(
+    _FilterPatients,
+    [Total Patients]
+)
+
+% Administrative schedule = 
+DIVIDE(
+    COUNTROWS(
+        FILTER(
+            'Patient Dataset',
+            'Patient Dataset'[patient_admin_flag]="TRUE")  
+        ),[Total Patients]
+)
+
+% Female Visit = 
+DIVIDE(
+    CALCULATE(
+        [Total Patients],
+        'Patient Dataset'[patient_gender]="F"
+    ),
+    [Total Patients]
+)
+
+% Male Visit = 
+DIVIDE(
+    CALCULATE(
+        [Total Patients],
+        'Patient Dataset'[patient_gender]="M"
+    ),
+    [Total Patients]
+)
+
+% No Rating = 
+VAR _NoRatings = 
+CALCULATE(
+    [Total Patients],
+    'Patient Dataset'[patient_sat_score] = BLANK()
+)
+RETURN 
+DIVIDE(
+    _NoRatings,
+    [Total Patients]
+)
+
+% None - Administrative schedule = 
+DIVIDE(
+    COUNTROWS(
+        FILTER(
+            'Patient Dataset',
+            'Patient Dataset'[patient_admin_flag]="False")  
+        ),[Total Patients]
+)
+
+% Un  Referred Patients = 
+VAR _FilterPatients =
+CALCULATE(
+    [Total Patients],
+    'Patient Dataset'[department_referral]="none"
+)
+RETURN
+DIVIDE(
+    _FilterPatients,
+    [Total Patients]
+)
+
+% Unknown = 
+DIVIDE(
+    CALCULATE(
+        [Total Patients],
+        'Patient Dataset'[patient_gender]="NC"
+    ),
+    [Total Patients]
+)
+
+Average Satisfaction = 
+CALCULATE(
+    AVERAGE('Patient Dataset'[patient_sat_score]),
+    'Patient Dataset'[patient_sat_score] <> BLANK()
+)
+
+Average Wait Time = AVERAGE('Patient Dataset'[patient_waittime])
+
+CF Max point (Month) = 
+VAR _patientTable = 
+CALCULATETABLE(
+    ADDCOLUMNS(
+        SUMMARIZE('Date','Date'[Month]),
+        "@Total_Patients",[Total Patients]
+    ),
+    ALLSELECTED()
+)
+VAR MinValu =MINX(_patientTable,[@Total_Patients])
+VAR MaxValu =MAXX(_patientTable,[@Total_Patients])
+VAR _TotalPatients =[Total Patients]
+RETURN
+SWITCH(
+    TRUE(),
+    _TotalPatients = MinValu,0,
+    _TotalPatients = MaxValu,1
+)
+
+CF Max point (Year) = 
+VAR _patientTable = 
+CALCULATETABLE(
+    ADDCOLUMNS(
+        SUMMARIZE('Date','Date'[Year]),
+        "@Total_Patients",[Total Patients]
+    ),
+    ALLSELECTED()
+)
+VAR MinValu =MINX(_patientTable,[@Total_Patients])
+VAR MaxValu =MAXX(_patientTable,[@Total_Patients])
+VAR _TotalPatients =[Total Patients]
+RETURN
+SWITCH(
+    TRUE(),
+    _TotalPatients = MinValu,0,
+    _TotalPatients = MaxValu,1
+)
+
+Values  Max point (Month) = 
+VAR _patientTable = 
+CALCULATETABLE(
+    ADDCOLUMNS(
+        SUMMARIZE('Date','Date'[Month]),
+        "@Total_Patients",[Total Patients]
+    ),
+    ALLSELECTED()
+)
+VAR MinValu =MINX(_patientTable,[@Total_Patients])
+VAR MaxValu =MAXX(_patientTable,[@Total_Patients])
+VAR _TotalPatients =[Total Patients]
+RETURN
+SWITCH(
+    TRUE(),
+    _TotalPatients = MinValu,[Total Patients],
+    _TotalPatients = MaxValu,[Total Patients]
+)
+
+Values  Max point (Year) = 
+VAR _patientTable = 
+CALCULATETABLE(
+    ADDCOLUMNS(
+        SUMMARIZE('Date','Date'[Year]),
+        "@Total_Patients",[Total Patients]
+    ),
+    ALLSELECTED()
+)
+VAR MinValu =MINX(_patientTable,[@Total_Patients])
+VAR MaxValu =MAXX(_patientTable,[@Total_Patients])
+VAR _TotalPatients =[Total Patients]
+RETURN
+SWITCH(
+    TRUE(),
+    _TotalPatients = MinValu,[Total Patients],
+    _TotalPatients = MaxValu,[Total Patients]
+)
+
+Date = 
+ADDCOLUMNS(
+CALENDARAUTO(),
+"Year", YEAR([Date]),
+"Month",FORMAT([Date],"mmm"),
+"WeekType" ,IF(WEEKDAY([Date])=1,"Weekend",IF(WEEKDAY([Date])=7,"Weekend","Weekday")),
+"Weekday",FORMAT([Date],"ddd"),
+"MonthNum",MONTH([Date])
+)
